@@ -10,9 +10,9 @@ pipeline {
   }
 
   environment {
-    PROJECT_NAME = 'advproject'
+    PROJECT_NAME = 'zook'
     DOCKER_REGISTER = 'ccr.ccs.tencentyun.com'
-    DOCKER_NAMESPCAE = 'darkreunion'
+    DOCKER_NAMESPCAE = 'tjldockerdemo'
     CHANGE_LOG = sh returnStdout: true, script: 'git log --pretty=format:\'%h - %an,%ar : %s\' --since=\'1 hours\' | head -n 1'
   }
 
@@ -42,17 +42,6 @@ pipeline {
         success {
           sh 'docker rmi `docker images | awk \'/^<none>/ { print $3 }\'`'
           sh "docker rmi ${env.DOCKER_REGISTER}/${env.DOCKER_NAMESPCAE}/${env.PROJECT_NAME}:build-${BUILD_NUMBER}"
-        }
-      }
-    }
-
-    stage('Deploy'){
-      steps {
-        sh """rm -f deployment.yaml
-        sed -e s/{buildID}/${env.BUILD_NUMBER}/g deployment-template.yaml > deployment.yaml"""
-
-        withKubeConfig([credentialsId: 'kubctl-config', serverUrl: "${env.K8S_SERVER}"]) {
-          sh 'kubectl apply -f deployment.yaml'
         }
       }
     }
